@@ -7,6 +7,16 @@ from sklearn.model_selection import cross_val_predict, cross_val_score, KFold, S
 
 
 def population_init(size, n_feat):
+    """
+    Initializes the population for the genetic algorithm.
+
+    Parameters:
+    size (int): Number of chromosomes in the population.
+    n_feat (int): Number of features (length of each chromosome).
+
+    Returns:
+    list: A list of numpy arrays representing the population.
+    """
     population = []
 
     for i in range(size):
@@ -19,6 +29,18 @@ def population_init(size, n_feat):
 
 
 def fitness_score(population, model, X, y):
+    """
+    Evaluates the fitness score of each chromosome in the population.
+
+    Parameters:
+    population (list): List of chromosomes.
+    model (object): Machine learning model to evaluate.
+    X (DataFrame): Features dataset.
+    y (Series): Labels dataset.
+
+    Returns:
+    tuple: Sorted list of fitness scores and corresponding sorted population.
+    """
     scores = []
 
     for chromosome in population:
@@ -34,6 +56,16 @@ def fitness_score(population, model, X, y):
 
 
 def selection(pop_after_fit, selection_prop=0.5):
+    """
+    Selects the top-performing chromosomes from the population.
+
+    Parameters:
+    pop_after_fit (list): List of chromosomes after fitness evaluation.
+    selection_prop (float): Proportion of the population to select.
+
+    Returns:
+    list: List of selected chromosomes.
+    """
     n_select = int(len(pop_after_fit) * selection_prop)
     population_nextgen = pop_after_fit[:n_select]
 
@@ -41,6 +73,17 @@ def selection(pop_after_fit, selection_prop=0.5):
 
 
 def crossover(pop_after_sel, size, crossover_prop=0.5):
+    """
+    Performs crossover between selected chromosomes to create new ones.
+
+    Parameters:
+    pop_after_sel (list): List of selected chromosomes.
+    size (int): Desired size of the new population.
+    crossover_prop (float): Proportion of the chromosome length to use for crossover.
+
+    Returns:
+    list: List of new chromosomes created by crossover.
+    """
     pop_nextgen = []
 
     while len(pop_nextgen) < size - 2:
@@ -59,6 +102,17 @@ def crossover(pop_after_sel, size, crossover_prop=0.5):
 
 
 def mutation(pop_after_cross, n_feat, mutation_rate=0.3):
+    """
+    Introduces mutations into the population.
+
+    Parameters:
+    pop_after_cross (list): List of chromosomes after crossover.
+    n_feat (int): Number of features (length of each chromosome).
+    mutation_rate (float): Proportion of the chromosome to mutate.
+
+    Returns:
+    list: List of mutated chromosomes.
+    """
     mutation_range = int(mutation_rate * n_feat)
     pop_next_gen = []
 
@@ -79,6 +133,18 @@ def mutation(pop_after_cross, n_feat, mutation_rate=0.3):
 
 
 def evaluate_model(model, X, y, k_folds):
+    """
+    Evaluates a machine learning model with accuracy, sensitivity and specificity with different k-folds.
+
+    Parameters:
+    model (object): Machine learning model to evaluate.
+    X (DataFrame): Features dataset.
+    y (Series): Labels dataset.
+    k_folds (list): List of k-fold values for cross-validation.
+
+    Returns:
+    dict: Dictionary containing the evaluation metrics for each k-fold value.
+    """
     result_dict = {'accuracy': [], 'sensitivity': [], 'specificity': []}
 
     for k in k_folds:
