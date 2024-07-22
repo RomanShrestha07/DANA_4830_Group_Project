@@ -95,7 +95,7 @@ def selection(pop_after_fit, selection_prop=0.5):
     return population_nextgen
 
 
-def crossover(pop_after_sel, size, crossover_prop=0.5, n_elites=2):
+def crossover(pop_after_sel, size, crossover_prop=0.5):
     """
     Performs crossover between selected chromosomes to create new ones.
 
@@ -110,7 +110,7 @@ def crossover(pop_after_sel, size, crossover_prop=0.5, n_elites=2):
     """
     pop_nextgen = []
 
-    while len(pop_nextgen) < size - n_elites:
+    while len(pop_nextgen) < size - 2:
         # Randomly select two parents from the selected chromosomes
         parent1 = pop_after_sel[randint(0, len(pop_after_sel) - 1)]
         parent2 = pop_after_sel[randint(0, len(pop_after_sel) - 1)]
@@ -127,7 +127,7 @@ def crossover(pop_after_sel, size, crossover_prop=0.5, n_elites=2):
         pop_nextgen.append(child2)
 
     # Return the list of new chromosomes, trimming to the desired size to maintain elitism
-    return pop_nextgen[:size - n_elites]
+    return pop_nextgen[:size - 2]
 
 
 def mutation(pop_after_cross, n_feat, mutation_rate=0.3):
