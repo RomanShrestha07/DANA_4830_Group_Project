@@ -103,7 +103,6 @@ def crossover(pop_after_sel, size, crossover_prop=0.5):
     pop_after_sel (list): List of selected chromosomes.
     size (int): Desired size of the new population.
     crossover_prop (float): Proportion of the chromosome length to use for crossover.
-    n_elites (int): Desired number of elites.
 
     Returns:
     list: List of new chromosomes created by crossover.
