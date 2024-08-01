@@ -63,7 +63,7 @@ def fitness_score(population, model, X, y):
         median_score = median(accuracy_scores)
 
         # Append the median score to the scores list
-        scores.append(median_score + 0.15)
+        scores.append(median_score)
 
     # Convert scores and population lists to numpy arrays for sorting
     scores, population = np.array(scores), np.array(population)
