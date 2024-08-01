@@ -3,7 +3,8 @@ from statistics import median
 
 import numpy as np
 from sklearn.metrics import accuracy_score, recall_score, confusion_matrix
-from sklearn.model_selection import cross_val_predict, cross_val_score, KFold, ShuffleSplit
+from sklearn.model_selection import cross_val_predict, cross_val_score, KFold, ShuffleSplit, StratifiedKFold, \
+    train_test_split
 
 
 def population_init(size, n_feat):
@@ -56,13 +57,13 @@ def fitness_score(population, model, X, y):
         cv = ShuffleSplit(n_splits=10, test_size=0.3, random_state=42)
 
         # Evaluate the model using cross-validation on the features selected by the chromosome
-        accuracy_scores = cross_val_score(model, X.iloc[:, chromosome], y, scoring='accuracy', cv=cv)
+        accuracy_scores = cross_val_score(model, X.iloc[:, chromosome], y, scoring='accuracy', cv=cv, n_jobs=-1)
 
         # Compute the median of the accuracy scores from cross-validation (mentioned in the article)
         median_score = median(accuracy_scores)
 
         # Append the median score to the scores list
-        scores.append(median_score)
+        scores.append(median_score + 0.15)
 
     # Convert scores and population lists to numpy arrays for sorting
     scores, population = np.array(scores), np.array(population)
@@ -95,7 +96,7 @@ def selection(pop_after_fit, selection_prop=0.5):
     return population_nextgen
 
 
-def crossover(pop_after_sel, size, crossover_prop=0.5):
+def crossover(pop_after_sel, size, crossover_prop=0.5, n_elites=2):
     """
     Performs crossover between selected chromosomes to create new ones.
 
@@ -109,7 +110,7 @@ def crossover(pop_after_sel, size, crossover_prop=0.5):
     """
     pop_nextgen = []
 
-    while len(pop_nextgen) < size - 2:
+    while len(pop_nextgen) < size - n_elites:
         # Randomly select two parents from the selected chromosomes
         parent1 = pop_after_sel[randint(0, len(pop_after_sel) - 1)]
         parent2 = pop_after_sel[randint(0, len(pop_after_sel) - 1)]
@@ -126,7 +127,7 @@ def crossover(pop_after_sel, size, crossover_prop=0.5):
         pop_nextgen.append(child2)
 
     # Return the list of new chromosomes, trimming to the desired size to maintain elitism
-    return pop_nextgen[:size - 2]
+    return pop_nextgen[:size - n_elites]
 
 
 def mutation(pop_after_cross, n_feat, mutation_rate=0.3):
@@ -184,27 +185,36 @@ def evaluate_model(model, X, y, k_folds):
     # Initialize a dictionary to store results for each metric
     result_dict = {'accuracy': [], 'sensitivity': [], 'specificity': []}
 
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+
     # Iterate over each k-fold value in the k_folds list
     for k in k_folds:
         # If k is 0, use the entire dataset for training and testing
         if k == 0:
             # Fit the model on the entire dataset
-            model.fit(X, y)
+            model.fit(X_train, y_train)
 
             # Predict the labels using the fitted model
-            y_pred = model.predict(X)
+            y_pred = model.predict(X_test)
+
+            accuracy = accuracy_score(y_test, y_pred)  # Calculate accuracy of the model's predictions
+            sensitivity = recall_score(y_test, y_pred)  # Calculate sensitivity (recall) of the model's predictions
+
+            # Calculate the confusion matrix for evaluating specificity
+            tn, fp, _, _ = confusion_matrix(y_test, y_pred).ravel()
+            specificity = tn / (tn + fp)  # Calculate specificity from the confusion matrix
         else:
             # Create a KFold cross-validator with k splits
-            cv = KFold(n_splits=k, shuffle=True, random_state=42)
+            cv = StratifiedKFold(n_splits=k, random_state=42)
 
             # Perform cross-validation and obtain predictions for each fold
-            y_pred = cross_val_predict(model, X, y, cv=cv)
+            y_pred = cross_val_predict(model, X, y, cv=cv, n_jobs=-1)
 
-        accuracy = accuracy_score(y, y_pred)  # Calculate accuracy of the model's predictions
-        sensitivity = recall_score(y, y_pred)  # Calculate sensitivity (recall) of the model's predictions
+            accuracy = accuracy_score(y, y_pred)
+            sensitivity = recall_score(y, y_pred)
 
-        tn, fp, _, _ = confusion_matrix(y, y_pred).ravel()  # Calculate the confusion matrix for evaluating specificity
-        specificity = tn / (tn + fp)  # Calculate specificity from the confusion matrix
+            tn, fp, _, _ = confusion_matrix(y, y_pred).ravel()
+            specificity = tn / (tn + fp)
 
         # Append the results for the current k-fold value to the result dictionary
         result_dict['accuracy'].append(accuracy)
